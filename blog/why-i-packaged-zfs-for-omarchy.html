@@ -202,6 +202,22 @@
 
 <p>Twenty-nine years in, that feels like the actual lesson. Not a filesystem preference. A way to disagree with software you admire without asking anybody to change their mind.</p>
 
+<h2>My preference is not your burden to carry</h2>
+
+<p>There's a habit in open source where a maintainer says no and people treat it as a moral failing. I've watched it happen to people I like, and I've felt the pull myself. You want a thing, the thing is clearly possible, somebody with commit access declined, so obviously they're being unreasonable about it.</p>
+
+<p>They're usually not. A maintainer saying no to your use case is often them protecting the exact quality that made you want to use their project in the first place. Omarchy is good because somebody has taste and applies it consistently. "Support my filesystem too" is a request to dilute that, permanently, for free, on hardware they don't own, in a configuration they can't test.</p>
+
+<p>Nobody owes me a filesystem.</p>
+
+<p>The test I've settled on is simple. If I want something badly enough to argue for it, do I want it badly enough to carry it? Not write it once and hand it over. Carry it. Test it on every release, answer the issues, keep it working when upstream moves under me.</p>
+
+<p>For ZFS on Omarchy the answer was yes, so the weight is mine. omarchy-zfs is my problem. My hooks, my guards, my 2am debugging when a kernel outruns zfs-dkms. If I get bored of it, that's a real risk to anybody depending on it, and people should know that going in instead of finding out later.</p>
+
+<p>Which cuts both ways, and this is the part I didn't see coming. I'm the maintainer now. Somebody is going to ask me for per-user encrypted home datasets unlocked by PAM. It's a reasonable thing to want. I might say no. If I do, it won't be hostility, it'll be me working out what I can actually carry.</p>
+
+<p>Your preference is legitimate. It's also yours.</p>
+
 <p>If your storage world runs on ZFS too, it's an AUR package and an ISO away at <a href="https://omarchy-zfs.com">omarchy-zfs.com</a>. And if you hit something the docs don't cover, tell me. That's the part I want to hear about.</p>
             </article>
             <footer class="post-footer">
