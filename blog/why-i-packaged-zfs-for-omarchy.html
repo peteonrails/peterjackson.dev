@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Why I packaged ZFS for Omarchy instead of opening a giant PR, or: How I Learned to Stop Forking and Love the Package Manager | Pete Jackson</title>
+    <meta name="description" content="I&#x27;ve been running Linux since 1997 and ZFS since 2019. My first Omarchy install was a ZFS boot environment I could throw away. When I switched for real there was exactly one opinion I couldn&#x27;t take — and the right way to fix that turned out not to be a pull request.">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/blog/blog.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">pete jackson</a>
+            <div class="nav-links">
+                <a href="/blog/">Blog</a>
+                <a href="/#projects">Projects</a>
+                <a href="/#contact">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="post">
+        <div class="post-container">
+            <p class="draft-banner">Draft &mdash; not indexed, not linked from the site. For review.</p>
+            <header class="post-header">
+                <p class="post-date">2026-08-20</p>
+                <h1>Why I packaged ZFS for Omarchy instead of opening a giant PR, or: How I Learned to Stop Forking and Love the Package Manager</h1>
+            </header>
+            <article class="post-body">
+<p>I installed my first Linux system in 1997, and I have changed distributions more than a dozen times since. Caldera, back before that name turned into a lawsuit. Slackware. Red Hat, then CentOS, until CentOS stopped being CentOS. Debian and Ubuntu and Mint. SuSE, then openSUSE. Intel's Clear Linux. Manjaro, Arch, EndeavourOS, CachyOS.</p>
+
+<p>On top of those, the desktops: GNOME 2, then the GNOME 3 schism, then KDE. Then in 2010 <a href="https://www.linkedin.com/in/paulostazeski/">Paul Ostazeski</a> at Intridea turned me on to tiling window managers, and that was the end of me ever going back. xmonad first — I decided my window manager should be a configuration language, and for a while it was Haskell. Then awesome. Then i3, where I was genuinely happy for years, right up until it stopped picking up the features I wanted. Then Hyprland, which is where I still am. I gave Niri an honest try; it's very good and I don't love it, and I've made peace with the fact that those two things can both be true.</p>
+
+<p>In the same stretch I have built at least a dozen machines to run all of that on. Not bought — built, one part at a time, with the case usually chosen last and loved longest.</p>
+
+<p>So: twenty-nine years, a dozen-plus distributions, half a dozen desktop environments, a dozen-odd machines. Every single one of those things has been replaced. What has <em>not</em> changed once is the data. The photos, the mail, the ~/src directory full of half-finished ideas — they have outlived every distro I ever installed and every motherboard I ever screwed into a case.</p>
+
+<p>That asymmetry is why I care so much about filesystems. A distro is a weekend. A build is a month of watching for sales. Your data is your life.</p>
+
+<h2>The hardlink years</h2>
+
+<p>Before ZFS, my backup strategy was the one a lot of us built: <code>rsync</code> with <code>--link-dest</code>, one directory per run, unchanged files hardlinked to the previous snapshot. You got a browsable tree for every backup, at roughly the disk cost of the changes. Mike Rubel wrote the canonical version of this trick up in 2004; rsnapshot packaged it; Back In Time put a GUI on it. Apple shipped Time Machine in 2007 and everyone described the technique as "like Time Machine," which always struck me as backwards. We were doing it first.</p>
+
+<p>It worked, and I ran it for years. But it has a ceiling. Hardlink snapshots are a clever accounting trick on top of a filesystem that doesn't know what you're doing. They can't tell you whether the bytes they copied are the bytes you wrote. There's no atomicity — a file changing mid-run is just a torn file in your backup. Restores are file-level, so "put this whole subvolume back the way it was on Tuesday" isn't an operation. And the runs got slower as the trees got bigger, because every one of them walks the entire filesystem to find out what changed.</p>
+
+<p>I also got very tired of watching <code>fsck</code> on boot. There is a specific flavor of dread in seeing a progress meter between you and your machine, knowing the only available action is waiting.</p>
+
+<h2>2019: I tried btrfs first, and I liked it</h2>
+
+<p>Here is the part people expect me to get wrong, so let me be precise about it. When I went looking for a copy-on-write filesystem in 2019, <strong>I tried btrfs first, and I genuinely liked it.</strong> Subvolumes made sense. Snapshots were instant. The tooling was pleasant. I was not a reluctant convert looking for an excuse.</p>
+
+<p>There was one thing I wanted that it couldn't do: put a small SSD in front of a pile of spinning disks and let the filesystem manage the caching. btrfs had no answer for that, and I decided I could live without it.</p>
+
+<p>Then a disk failed in the array holding my music library. 250 GB of it, most of a lifetime of collecting, and the array did not save me. I was — and I want to choose my words carefully here — <em>upset</em>.</p>
+
+<p>Multi-device redundancy was the weakest part of btrfs at the time, and it was the part experienced people warned about most loudly. In 2019 those warnings were correct, at least for me and at least that day.</p>
+
+<p><em>(A coda, in the interest of honesty: months later I discovered the whole library sitting in an Amazon Glacier archive I'd half-forgotten about. It all worked out. Which is its own lesson, and not a small one — the thing that actually saved me was not a clever filesystem, it was a boring off-site copy I'd made and stopped thinking about. Every good decision I've made about storage since has been downstream of that.)</em></p>
+
+<p>I also want to be fair, because this is where a post like this usually turns unfair: <strong>btrfs in 2026 is not btrfs in 2019.</strong> It has had years of serious work and it is the default on major distributions for good reasons. My scar tissue is a data point about a specific era, not a verdict on the filesystem today.</p>
+
+<p>But it sent me looking, and by then I knew exactly what I wanted: snapshots as a real filesystem primitive rather than an rsync convention. Checksums, so the filesystem tells me when it has lost something instead of quietly handing me bad bytes. No fsck standing between me and a boot. Multi-disk redundancy I trusted. And yes — SSD cache in front of spinning rust. ZFS had all five, and had had them for a decade.</p>
+
+<h2>The license I had to make peace with</h2>
+
+<p>Knowing what I wanted didn't make me switch. I resisted ZFS for a good while longer, and the reason was legal rather than technical.</p>
+
+<p>ZFS is licensed under the CDDL — Sun's license, written for OpenSolaris. Linux is GPLv2. Almost everyone who has examined the pair concludes they cannot be combined and then <em>redistributed as a binary</em>: GPLv2 requires derivative works of the kernel to be GPLv2, and the CDDL does not permit relicensing. That is why ZFS will never be merged into mainline; Linus has said so directly. The copyright now belongs to Oracle, who inherited it with Sun and could end the argument with a single relicensing decision, and never has.</p>
+
+<p>The workaround the whole ecosystem settled on is to ship <em>source</em> and build the module on your own machine, via DKMS. Compiling a module for a computer you own isn't distribution, so the legally contested act never occurs. Canonical is the conspicuous exception, shipping a prebuilt <code>zfs.ko</code> and arguing it is fine; the Software Freedom Conservancy publicly disagreed. Nothing was ever resolved. It simply became normal.</p>
+
+<p>I find that unsatisfying, and I want to be honest that it is a real cost rather than a footnote. It is not a licensing cost, though — it is an operational one. ZFS is out-of-tree permanently. It must be rebuilt for every kernel. It can lag a new kernel by months. And the kernel community occasionally tightens things in ways that land on ZFS specifically: in 2019 a set of FPU symbols became GPL-only and ZFS lost its SIMD acceleration for a while.</p>
+
+<p>Every guard in the package I ended up writing exists because of that paragraph. Out-of-tree modules are why a kernel upgrade can strand you, why a DKMS failure being a mere warning is dangerous, and why something has to keep watch. The license is upstream of all of it.</p>
+
+<h2>Writing the Clear Linux guide</h2>
+
+<p>I was on Intel's Clear Linux at the time — an aggressively optimized, stateless distro that did a great many things its own way. When I started asking how to run root-on-ZFS there, the answer I got was that it would not work and I should not bother.</p>
+
+<p>It worked. It took some doing, but it worked, and I wrote it up: the <a href="https://github.com/clearlinux/clear-linux-documentation/blob/master/source/tutorials/zfs.rst">original Clear Linux ZFS guide</a> in Intel's own documentation. That was the first time I noticed how much more useful "here is exactly how I did this" is than "someone should support this."</p>
+
+<p><em>(A parenthetical I have never quite gotten over: the Clear Linux core team went on to reformat essentially every line of that guide without materially changing its content. Wild. I have made peace with it.)</em></p>
+
+<p>Intel has since wound Clear Linux down. The guide outlived the distribution, which is either poetic or exactly the point of this entire post, depending on your mood.</p>
+
+<h2>The day it proved itself</h2>
+
+<p>What made me stay was a scrub. It found errors, told me exactly which files were affected, and — because the pool had redundancy — repaired them from the good copy. No guessing, no restore, no wondering what else might be quietly wrong. After that, filesystems without end-to-end checksums started to feel like driving without a seatbelt.</p>
+
+<h2>Where I am now</h2>
+
+<p>The current machine — number twelve or thereabouts — lives in a Fractal North, which I love more than is strictly reasonable for a box that mostly sits under a desk being quiet.</p>
+
+<p>Inside it, an NVMe mirror for the root pool. Behind that, a pool of spinning disks fronted by a 256 GB NVMe doing read-cache and log duty, which makes a pile of cheap rust behave a great deal like a very large SSD for the access patterns I actually have. It is the single best price-per-terabyte trick I know, it is a one-line <code>zpool add</code> — and it is precisely the thing I gave up when I tried btrfs in 2019 and told myself I could live without.</p>
+
+<p>The NAS is TrueNAS Scale. Snapshots replicate to it, and from there to cheap S3 and Cloudflare R2. The property that makes that chain tolerable is raw encrypted send: <code>zfs send -w</code> ships the still-encrypted blocks, so the cloud target stores my data without ever holding a key and nothing gets decrypted and re-encrypted in the middle. My laptop, my workstation, my NAS and my off-site copies all speak the same commands.</p>
+
+<p>That is the context that matters for everything below. ZFS isn't a preference I hold; it is the substrate the rest of my computing sits on.</p>
+
+<h2>Then I switched to Omarchy</h2>
+
+<p>I came to Omarchy sideways, through my own software. I build <a href="https://voxtype.io">Voxtype</a>, a dictation tool for Linux, and Carmine Paolino asked me for a few Omarchy-friendly features. I'm a Rails developer, so I'd known DHH was building a distribution — I just hadn't gotten around to trying it. That request was the nudge. November of last year, I finally installed it.</p>
+
+<p>And here is the part I enjoy telling: <strong>I installed Omarchy on its own ZFS dataset and booted it with ZFSBootMenu.</strong> I didn't repartition anything, didn't dual-boot in the traditional sense, didn't risk my working machine. I made a boot environment, installed a distribution into it, and picked it from a menu at power-on. CachyOS stayed my daily driver the whole time. If Omarchy hadn't worked out, the cleanup would have been one <code>zfs destroy</code>.</p>
+
+<p>So the first thing ZFS ever did for Omarchy, in my life, was let me try Omarchy at all. That's the same capability this package now hands to everybody else, and it's why I keep insisting boot environments are the point rather than a nice extra.</p>
+
+<p>I ran it that way for months. What eventually moved me was people: I decided the Omarchy conference was worth attending to meet other users in person, and Ryan Hughes talked me into switching wholesale while I was there. I did. I've never looked back and I've never regretted it — which, after a dozen-plus distros, is not a sentence I hand out often.</p>
+
+<p>It helped that Omarchy was already standing where I'd parked. Fifteen years of tiling window managers had landed me on Hyprland under my own steam; Omarchy ships Hyprland, configured by someone with taste, wired to a coherent set of everything else. That is a very short distance to travel.</p>
+
+<p>Because what I'll say plainly is that Omarchy is good <em>because</em> it is opinionated. DHH picked a coherent set of choices and made them work together, and the result feels designed instead of assembled. I have spent years maintaining my dotfiles as a personal art project. Omarchy is better than my art project, and it took an afternoon instead of a decade.</p>
+
+<p>Being opinionated means the opinions are load-bearing. And there was one I couldn't take: btrfs.</p>
+
+<p>You can see why, given the last section. Partly it's the scar tissue. Mostly, though, it's that <strong>my storage world already runs on ZFS</strong>, and I didn't want two mental models of how snapshots, encryption and replication work depending on which machine I was sitting at. I want whole-pool native encryption rather than a filesystem stacked on LUKS. I want <code>zfs send</code> to my NAS. I want one toolset from the laptop to the off-site copy.</p>
+
+<p>There's a portability argument too, and it's worth stating narrowly, because the sloppy version of it is wrong. ZFS is a first-class filesystem on Linux, FreeBSD and illumos, sharing one on-disk format and one set of feature flags — you can export a pool on one, physically carry the disks to another, and import it. Beyond those there are real community ports: OpenZFS on macOS is at 2.3.1 and supports Apple Silicon as well as Intel, and OpenZFS on Windows exists but is still shipping release candidates, so I wouldn't trust it with anything I cared about yet.</p>
+
+<p>btrfs is Linux-only in practice — though not for want of trying, and I'd rather be accurate than score points here: WinBtrfs is a genuinely impressive clean-room read-write driver for Windows, signed, actively maintained, and good enough that ReactOS ships it. What btrfs lacks is a macOS story beyond a virtual machine or a microVM-and-NFS shim, and any other operating system that treats it as native.</p>
+
+<p>I don't use macOS or Windows. I still like knowing my disks would be readable if I ever had to.</p>
+
+<p>That's a real requirement. It is also a <em>minority</em> requirement. Both being true at once is the whole story of this project.</p>
+
+<h2>The pull request I didn't open</h2>
+
+<p>My first instinct was the obvious one: teach Omarchy to install on ZFS, open a PR, feel useful. I got a fair way into thinking about it before I stopped, for four reasons.</p>
+
+<p><strong>It wasn't a bug, it was a product decision.</strong> Omarchy's installer, its snapshot story and its boot flow are built around btrfs on purpose. Asking for ZFS support isn't asking for a fix; it's asking someone else to adopt a second filesystem, permanently.</p>
+
+<p><strong>A big PR for one person's use case is a tax on everyone else.</strong> The code is the cheap part. What I'd really have been proposing is a second path that has to be tested on every release, forever, by people who don't run it. That's not a gift. Maintainers who accept that kind of contribution end up maintaining your hobby.</p>
+
+<p><strong>Reviewers can't validate what they can't run.</strong> Root-on-ZFS with ZFSBootMenu touches partitioning, initramfs generation, out-of-tree kernel modules, EFI boot entries and encryption key handling. A reviewer without a ZFS machine can't meaningfully review that. Merging it would mean trusting me — and then owning it when it broke at 2am for someone else.</p>
+
+<p><strong>And forks rot.</strong> The other option was maintaining a fork with ZFS patched in. I tried that shape early, and it's a treadmill: every upstream release is a merge conflict, and the week you get busy is the week your users are stranded on old code.</p>
+
+<p>So I sat on it. For a while the honest answer was "ZFS on Omarchy is possible, but only if you're willing to hand-assemble it and re-check it after every update" — which is a roundabout way of saying it wasn't safe.</p>
+
+<h2>What Quattro changed</h2>
+
+<p>Omarchy 4 — Quattro — ships as <strong>Arch packages</strong> from a real repository, instead of a shell script that clones itself into your home directory.</p>
+
+<p>That sounds like plumbing. It completely changed the shape of my problem.</p>
+
+<p>Once Omarchy is a package, I don't need to <em>modify</em> Omarchy. I can <strong>depend on</strong> it. <code>omarchy-zfs</code> is a normal Arch package that lists <code>omarchy</code> as a dependency, adds the ZFS layer, and gets out of the way. Every file it ships is a real, package-owned file. Remove it and you're left with plain, unmodified Omarchy. No fork, no patch set, no treadmill.</p>
+
+<p>The interesting engineering isn't the install — it's <em>staying</em> installed. An <code>omarchy update</code> is entitled to overwrite its own files, and some of those files decide whether your machine boots. So the package leans on pacman hooks that run last in every transaction and re-assert what has to be true:</p>
+
+<ul>
+<li><strong>The <code>zfs</code> mkinitcpio hook.</strong> <code>omarchy update</code> rewrites Omarchy's mkinitcpio drop-in on every run. Without a guard, the next kernel rebuild produces an initramfs with no ZFS in it — and you find out at the worst possible moment. The hook re-derives the effective hook list and writes it to a drop-in that sorts later, so upstream's additions are inherited automatically and <code>zfs</code> always lands before <code>filesystems</code>.</li>
+<li><strong>Snapper configs.</strong> Omarchy's updater snapshots before it does anything, via snapper, whose config hardcodes btrfs. On ZFS that fails and the update aborts <em>before</em> touching a package, leaving a machine that is permanently un-updatable until you fix it by hand. The package removes snapper configs pointing at something that isn't btrfs, and leaves genuine btrfs ones alone.</li>
+<li><strong>The EFI boot order.</strong> <code>limine</code> is a hard dependency of Omarchy and registers its own EFI entry, which can quietly move ahead of ZFSBootMenu. On root-on-ZFS that's a dead boot, not a cosmetic issue. A hook keeps ZFSBootMenu first — and only ever <em>reorders</em>, never deletes another bootloader's entry, because that call belongs to the admin.</li>
+<li><strong>Kernel upgrades.</strong> ZFS is out-of-tree, so a new kernel can outrun it. Worse, a DKMS build failure is only a pacman <em>warning</em> — nothing stops you rebooting into a kernel with no <code>zfs.ko</code>. A pre-transaction guard blocks the upgrade instead, with a loud explanation and an escape hatch for when you know what you're doing.</li>
+</ul>
+
+<p>None of that is glamorous. All of it is the difference between "I got ZFS working once" and "ZFS on this machine is boring." Boring is the goal. Boring is what 1997-to-now taught me to want.</p>
+
+<h2>Upstream's answer, and why it was the right one</h2>
+
+<p>In July, closing the ZFS request on the Omarchy ISO repo, DHH wrote:</p>
+
+<blockquote><p>Omarchy isn't going to support ZFS. That's a product call.</p></blockquote>
+
+<p>He was right, and right for the reasons I'd already talked myself into. He also said he'd be glad to see it <strong>written up somewhere others can find it</strong>.</p>
+
+<p>That's a much better ask than a merge, and one I can satisfy without spending anyone else's maintenance budget. So alongside the package there are now proper docs for the three situations people actually find themselves in: a fresh machine you want on an encrypted ZFS root; an existing Omarchy install you want to move onto ZFS (there is no in-place btrfs→ZFS conversion, and anything claiming otherwise is about to lose your data); and — the one most people actually want — keeping Omarchy's btrfs root exactly as it is and putting ZFS under <code>/home</code> or a data pool.</p>
+
+<p>They include the parts that went wrong, because that's what nobody writes down. That ZFS will cheerfully mount a dataset over a non-empty <code>/home</code> and make your files invisible while new writes go somewhere else. That <code>findmnt /home</code> answers "mounted" for a plain directory, so a whole day's worth of my mount checks passed vacuously. That a missing <code>/home</code> makes the login screen behave exactly like it's rejecting a correct password.</p>
+
+<h2>What I'm actually happy about</h2>
+
+<p>The satisfying part isn't the ZFS support. It's that packaging turned out to be a <strong>social</strong> technology as much as a technical one.</p>
+
+<p>A pull request says: <em>please carry my use case forever.</em> A fork says: <em>I'll carry yours forever, badly.</em> A package says: <em>I'll carry mine, you carry yours, and we agree on an interface.</em> Nobody has to argue about taste. Upstream keeps its opinions, I keep mine, and my machine boots.</p>
+
+<p>Twenty-nine years in, that feels like the actual lesson. Not a filesystem preference — a way of disagreeing with software you admire without asking anyone to change their mind.</p>
+
+<p>If your storage world runs on ZFS too, it's an AUR package and an ISO away: <strong><a href="https://omarchy-zfs.com">omarchy-zfs.com</a></strong>. And if you hit something the docs don't cover, tell me. That's the part I actually want to hear about.</p>
+            </article>
+            <footer class="post-footer">
+                <p><a href="/blog/">&larr; More writing</a></p>
+            </footer>
+        </div>
+    </main>
+</body>
+</html>
