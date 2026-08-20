@@ -47,9 +47,9 @@
                 <p class="post-subtitle">or: How I Learned to Stop Forking and Love the Package Manager</p>
             </header>
             <article class="post-body">
-<p>I installed my first Linux system in 1997. Since then I've changed distributions more than a dozen times. Caldera, back before that name turned into a lawsuit. Slackware. Red Hat, then CentOS, until CentOS stopped being CentOS. Debian, Ubuntu, Mint. SuSE, then openSUSE. Intel's Clear Linux. Manjaro, Arch, EndeavourOS, CachyOS.</p>
+<p>I installed my first Linux system in 1997. Since then I've changed distributions more than a dozen times. <a href="https://en.wikipedia.org/wiki/Caldera_OpenLinux">Caldera</a>, back before that name turned into <a href="https://en.wikipedia.org/wiki/SCO%E2%80%93Linux_disputes">a lawsuit</a>. <a href="http://www.slackware.com/">Slackware</a>. <a href="https://www.redhat.com/">Red Hat</a>, then <a href="https://www.centos.org/">CentOS</a>, until CentOS <a href="https://blog.centos.org/2020/12/future-is-centos-stream/">stopped being CentOS</a>. <a href="https://www.debian.org/">Debian</a>, <a href="https://ubuntu.com/">Ubuntu</a>, <a href="https://linuxmint.com/">Mint</a>. SuSE, then <a href="https://www.opensuse.org/">openSUSE</a>. Intel's <a href="https://github.com/clearlinux">Clear Linux</a>. <a href="https://manjaro.org/">Manjaro</a>, <a href="https://archlinux.org/">Arch</a>, <a href="https://endeavouros.com/">EndeavourOS</a>, <a href="https://cachyos.org/">CachyOS</a>.</p>
 
-<p>Desktops too. GNOME 2, then the GNOME 3 schism, then KDE. In 2010 <a href="https://www.linkedin.com/in/paulostazeski/">Paul Ostazeski</a> at Intridea got me into tiling window managers and I never went back. xmonad first, because I decided my window manager should be a configuration language, and for a while that language was Haskell. Then awesome. Then i3, where I was happy for years, right up until it stopped picking up the features I wanted. Then Hyprland, where I still am. I gave Niri an honest try. It's very good and I don't love it. Both of those can be true.</p>
+<p>Desktops too. <a href="https://en.wikipedia.org/wiki/GNOME_2">GNOME 2</a>, then the <a href="https://en.wikipedia.org/wiki/GNOME_3">GNOME 3</a> <a href="https://en.wikipedia.org/wiki/MATE_(desktop_environment">schism</a>), then <a href="https://www.kde.org/">KDE</a>. In 2010 <a href="https://www.linkedin.com/in/paulostazeski/">Paul Ostazeski</a> at Intridea got me into tiling window managers and I never went back. <a href="https://xmonad.org/">xmonad</a> first, because I decided my window manager should be a configuration language, and for a while that language was Haskell. Then <a href="https://awesomewm.org/">awesome</a>. Then <a href="https://i3wm.org/">i3</a>, where I was happy for years, right up until it stopped picking up the features I wanted. Then <a href="https://hypr.land/">Hyprland</a>, where I still am. I gave <a href="https://github.com/YaLTeR/niri">Niri</a> an honest try. It's very good and I don't love it. Both of those can be true.</p>
 
 <p>I've also built at least a dozen machines to run all of it on. Not bought. Built, one part at a time, with the case picked last and loved longest.</p>
 
@@ -59,7 +59,7 @@
 
 <h2>The hardlink years</h2>
 
-<p>Before ZFS my backups were the ones a lot of us built. <code>rsync</code> with <code>--link-dest</code>, one directory per run, unchanged files hardlinked back to the previous snapshot. You got a browsable tree for every backup at roughly the disk cost of the changes. Mike Rubel wrote the canonical version of that trick in 2004. rsnapshot packaged it. Back In Time put a GUI on it. Apple shipped Time Machine in 2007, and afterward everybody described the technique as "like Time Machine," which always felt backwards to me. We were doing it first.</p>
+<p>Before ZFS my backups were the ones a lot of us built. <code>rsync</code> with <code>--link-dest</code>, one directory per run, unchanged files hardlinked back to the previous snapshot. You got a browsable tree for every backup at roughly the disk cost of the changes. Mike Rubel wrote <a href="http://www.mikerubel.org/computers/rsync_snapshots/">the canonical version of that trick</a> in 2004. <a href="https://rsnapshot.org/">rsnapshot</a> packaged it. Back In Time put a GUI on it. Apple shipped Time Machine in 2007, and afterward everybody described the technique as "like Time Machine," which always felt backwards to me. We were doing it first.</p>
 
 <p>It worked. I ran it for years. But it has a ceiling.</p>
 
@@ -87,43 +87,47 @@
 
 <p>Knowing what I wanted didn't make me switch. I sat on it a good while longer, and the reason was legal rather than technical.</p>
 
-<p>ZFS is CDDL licensed. That's Sun's license, written for OpenSolaris. Linux is GPLv2. Almost everybody who has looked at the pair concludes you can't combine them and then redistribute the result as a binary. GPLv2 says derivative works of the kernel have to be GPLv2, and the CDDL won't let you relicense. So ZFS will never land in mainline. Linus has said so directly. The copyright belongs to Oracle now, who got it along with Sun, and who could settle the whole argument by relicensing, and never has.</p>
+<p>ZFS is <a href="https://opensource.org/license/cddl-1-0">CDDL</a> licensed. That's Sun's license, written for OpenSolaris. Linux is <a href="https://www.gnu.org/licenses/old-licenses/gpl-2.0.html">GPLv2</a>. Almost everybody who has looked at the pair concludes you can't combine them and then redistribute the result as a binary. GPLv2 says derivative works of the kernel have to be GPLv2, and the CDDL won't let you relicense. So ZFS will never land in mainline. <a href="https://www.realworldtech.com/forum/?threadid=189711&amp;curpostid=189841">Linus has said so directly</a>, and his condition for changing his mind was an official letter from Oracle's legal counsel, or preferably from Larry Ellison. The copyright belongs to Oracle now, who got it along with Sun, and who could settle the whole argument by relicensing, and never has.</p>
 
-<p>The workaround everybody settled on is to ship source and build the module on your own machine with DKMS. Compiling a module for a computer you own isn't distribution, so the contested act never happens. Canonical is the loud exception. They ship a prebuilt <code>zfs.ko</code> and argue it's fine, the Software Freedom Conservancy publicly disagreed, nothing got resolved, and it just became normal.</p>
+<p>The workaround everybody settled on is to ship source and build the module on your own machine with DKMS. Compiling a module for a computer you own isn't distribution, so the contested act never happens. Canonical is the loud exception. They ship a prebuilt <code>zfs.ko</code> and argue it's fine, the <a href="https://sfconservancy.org/blog/2016/feb/25/zfs-and-linux/">Software Freedom Conservancy publicly disagreed</a>, nothing got resolved, and it just became normal.</p>
 
 <p>I find that unsatisfying. I also think the real cost isn't legal, it's operational. ZFS is out of tree permanently. It has to be rebuilt for every kernel. It can lag a new kernel by months. And kernel developers occasionally tighten something that lands on ZFS in particular. In 2019 a set of FPU symbols went GPL-only and ZFS lost its SIMD acceleration for a while.</p>
 
 <p>Every guard in the package I eventually wrote exists because of those two paragraphs. Out-of-tree modules are why a kernel upgrade can strand you, why a DKMS build failure being a mere warning is dangerous, and why something has to watch your back. The license sits upstream of all of it.</p>
 
-<h2>Writing the Clear Linux guide</h2>
+<h2>Getting ZFS onto Clear Linux</h2>
 
-<p>I was on Intel's Clear Linux at the time. Aggressively optimized, stateless, did plenty of things its own way. When I started asking how to run root-on-ZFS there, the answer I got was that it wouldn't work and I shouldn't bother.</p>
+<p>I was on Intel's Clear Linux at the time. Aggressively optimized, stateless, opinionated in its own ways, and with no real story for out-of-tree kernel modules. When people asked for ZFS, the answer from the core team was no. Here's a maintainer on a <a href="https://github.com/clearlinux/distribution/issues/631">2019 request for a ZFS bundle</a>:</p>
 
-<p>It worked. Took some doing, but it worked, and I wrote it up. That became the <a href="https://github.com/clearlinux/clear-linux-documentation/blob/master/source/tutorials/zfs.rst">original Clear Linux ZFS guide</a> in Intel's own documentation. It was the first time I noticed how much more useful "here's exactly how I did this" is than "somebody should support this."</p>
+<blockquote><p>Unlikely this will happen. Please consider using btrfs which is supported out of the box, or compile the drivers yourself.</p></blockquote>
+
+<p>Four days later he closed it: "This seems unreasonable to keep open unless licensing concerns are addressed by the copyright owner of this code." The official FAQ carried an entry titled "Is ZFS Available?" and the answer was not encouraging.</p>
+
+<p>Worth noting who else was in that thread. One person wanted ZFS because they were trying to put an SSD cache in front of an HDD array and btrfs had no easy support for it, which is my own motivation coming out of a stranger's mouth. Jim Salter, whose sanoid I now list as a dependency, turned up eight months later stuck on the same build.</p>
+
+<p>So I compiled it myself and wrote up how. That became the <a href="https://github.com/clearlinux/clear-linux-documentation/blob/master/source/tutorials/zfs.rst">original Clear Linux ZFS guide</a> in Intel's own documentation, merged in June 2020. Not root-on-ZFS, to be accurate about my own history. Pools on non-root devices, with the kernel module and userspace tools built by hand and a systemd unit to load the module at boot. <a href="https://github.com/clearlinux/clear-linux-documentation/pull/1174">My PR</a> said so at the time: "I stopped before adding a ZFS-on-root section because this tutorial is already long. ZFS-on-root is substantially harder." Once it merged, the core team <a href="https://github.com/clearlinux/clear-linux-documentation/issues/1194">deleted the "Is ZFS Available?" FAQ entry</a>.</p>
+
+<p>It was the first time I noticed how much more useful "here's exactly how I did this" is than "somebody should support this."</p>
 
 <p>(A parenthetical I've never quite gotten over. The Clear Linux core team then reformatted essentially every line of that guide without changing the content. Wild.)</p>
 
-<p>Intel has since wound Clear Linux down. The guide outlived the distribution, which is either poetic or the entire point of this post, depending on my mood.</p>
-
-<h2>The day it proved itself</h2>
-
-<p>What made me stay was a scrub. It found errors, told me exactly which files were affected, and repaired them from the good copy, because the pool had redundancy. No guessing, no restore, no wondering what else was quietly wrong. After that, a filesystem without end-to-end checksums felt like driving without a seatbelt.</p>
+<p>Intel has since wound Clear Linux down. clearlinux.org doesn't resolve anymore and the forums are gone. The guide outlived the distribution, which is either poetic or the entire point of this post, depending on my mood.</p>
 
 <h2>Where I am now</h2>
 
-<p>The current machine, number twelve or thereabouts, lives in a Fractal North. I love that case more than is reasonable for a box that mostly sits under a desk being quiet.</p>
+<p>The current machine, number twelve or thereabouts, lives in a <a href="https://www.fractal-design.com/products/cases/north/north/">Fractal North</a>. I love that case more than is reasonable for a box that mostly sits under a desk being quiet.</p>
 
 <p>Inside it, an NVMe mirror for the root pool. Behind that, a pool of spinning disks with a 256 GB NVMe in front doing read cache and log duty, which makes a stack of cheap rust behave a lot like a very large SSD for the way I actually use it. Best price-per-terabyte trick I know, it's one <code>zpool add</code>, and it's exactly the thing I gave up when I tried btrfs in 2019 and told myself I could live without.</p>
 
-<p>The NAS is TrueNAS Scale. Snapshots replicate there, and from there out to cheap S3 and Cloudflare R2. The piece that makes that chain tolerable is raw encrypted send. <code>zfs send -w</code> ships the still-encrypted blocks, so the cloud target holds my data without ever holding a key, and nothing gets decrypted and re-encrypted along the way. My laptop, my workstation, my NAS and my off-site copies all speak the same commands.</p>
+<p>The NAS is <a href="https://www.truenas.com/truenas-scale/">TrueNAS Scale</a>. Snapshots replicate there, and from there out to cheap S3 and Cloudflare R2. The piece that makes that chain tolerable is raw encrypted send. <code>zfs send -w</code> ships the still-encrypted blocks, so the cloud target holds my data without ever holding a key, and nothing gets decrypted and re-encrypted along the way. My laptop, my workstation, my NAS and my off-site copies all speak the same commands.</p>
 
 <p>That's the context for everything below. ZFS isn't a preference I hold. It's the substrate the rest of my computing sits on.</p>
 
 <h2>Then I switched to Omarchy</h2>
 
-<p>I got to Omarchy sideways, through my own software. I build <a href="https://voxtype.io">Voxtype</a>, a dictation tool for Linux, and Carmine Paolino asked me for a few Omarchy-friendly features. I'm a Rails developer, so I knew DHH was building a distribution. I just hadn't gotten around to trying it. That request was the nudge. November of last year I finally installed it.</p>
+<p>I got to <a href="https://omarchy.org">Omarchy</a> sideways, through my own software. I build <a href="https://voxtype.io">Voxtype</a>, a dictation tool for Linux, and <a href="https://x.com/paolino">Carmine Paolino</a> asked me for a few Omarchy-friendly features. I'm a Rails developer, so I knew <a href="https://x.com/dhh">DHH</a> was building a distribution. I just hadn't gotten around to trying it. That request was the nudge. November of last year I finally installed it.</p>
 
-<p>Here's the part I like telling. I installed Omarchy on its own ZFS dataset and booted it with ZFSBootMenu. No repartitioning, no dual boot in the traditional sense, no risk to my working machine. I made a boot environment, installed a distribution into it, and picked it from a menu at power on. CachyOS stayed my daily driver the whole time. If Omarchy hadn't worked out, cleanup would have been one <code>zfs destroy</code>.</p>
+<p>Here's the part I like telling. I installed Omarchy on its own ZFS dataset and booted it with <a href="https://zfsbootmenu.org/">ZFSBootMenu</a>. No repartitioning, no dual boot in the traditional sense, no risk to my working machine. I made a boot environment, installed a distribution into it, and picked it from a menu at power on. CachyOS stayed my daily driver the whole time. If Omarchy hadn't worked out, cleanup would have been one <code>zfs destroy</code>.</p>
 
 <p>So the first thing ZFS ever did for Omarchy in my life was let me try Omarchy at all. That's the same thing this package hands everybody else now, and it's why I keep saying boot environments are the point rather than a nice extra.</p>
 
@@ -137,9 +141,9 @@
 
 <p>You can see why from the last few sections. Partly the scar tissue. Mostly that my storage world already runs on ZFS, and I didn't want two mental models of snapshots, encryption and replication depending on which machine I was sitting at. I want whole-pool native encryption instead of a filesystem stacked on LUKS. I want <code>zfs send</code> to my NAS. I want one toolset from the laptop to the off-site copy.</p>
 
-<p>There's a portability argument too, and it's worth stating narrowly, because the sloppy version of it is wrong. ZFS is a first-class filesystem on Linux, FreeBSD and illumos, sharing one on-disk format and one set of feature flags, so you can export a pool on one, carry the disks to another, and import it. Past those there are real community ports. OpenZFS on macOS is at 2.3.1 and supports Apple Silicon as well as Intel. OpenZFS on Windows exists but is still shipping release candidates, so I wouldn't trust it with anything I cared about yet.</p>
+<p>There's a portability argument too, and it's worth stating narrowly, because the sloppy version of it is wrong. ZFS is a first-class filesystem on Linux, FreeBSD and illumos, sharing one on-disk format and one set of feature flags, so you can export a pool on one, carry the disks to another, and import it. Past those there are real community ports. <a href="https://www.openzfsonosx.org/">OpenZFS on macOS</a> is at 2.3.1 and supports Apple Silicon as well as Intel. <a href="https://openzfsonwindows.org/">OpenZFS on Windows</a> exists but is still shipping release candidates, so I wouldn't trust it with anything I cared about yet.</p>
 
-<p>btrfs is Linux-only in practice, though not for want of trying, and I'd rather be accurate than score points. WinBtrfs is an impressive clean-room read-write driver for Windows, signed, actively maintained, good enough that ReactOS ships it. What btrfs doesn't have is a macOS story beyond a virtual machine or a microVM-and-NFS shim, or any other operating system that treats it as native.</p>
+<p>btrfs is Linux-only in practice, though not for want of trying, and I'd rather be accurate than score points. <a href="https://github.com/maharmstone/btrfs">WinBtrfs</a> is an impressive clean-room read-write driver for Windows, signed, actively maintained, good enough that ReactOS ships it. What btrfs doesn't have is a macOS story beyond a virtual machine or a microVM-and-NFS shim, or any other operating system that treats it as native.</p>
 
 <p>I don't use macOS or Windows. I still like knowing my disks would be readable if I had to.</p>
 
