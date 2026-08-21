@@ -157,7 +157,7 @@
 
 <p>Because here's the thing. Omarchy is good because it's opinionated. DHH picked a coherent set of choices and made them work together, and the result feels designed instead of assembled. I spent years maintaining my dotfiles as a personal art project. Omarchy is better than my art project and it took an afternoon instead of a decade.</p>
 
-<p>Opinionated means the opinions are load bearing. And there was one I couldn't take: btrfs.</p>
+<p>Opinionated means the opinions are not decoration. And there was one I couldn't take: btrfs.</p>
 
 <p>You can see why from the last few sections. Partly the scar tissue. Mostly that my storage world already runs on ZFS, and I didn't want two mental models of snapshots, encryption and replication depending on which machine I was sitting at. I want whole-pool native encryption instead of a filesystem stacked on LUKS. I want <code>zfs send</code> to my NAS. I want one toolset from the laptop to the off-site copy.</p>
 
@@ -206,17 +206,15 @@
 
 <p>None of that is glamorous. All of it is the difference between getting ZFS working once and ZFS on this machine being boring. Boring is the goal. Twenty-nine years taught me to want boring.</p>
 
-<h2>Upstream's answer, and why it was right</h2>
+<h2>Upstream said no, and they were right</h2>
 
-<p>In July, closing the ZFS request on the Omarchy ISO repo, DHH wrote:</p>
+<p>The ZFS request on the Omarchy ISO repo was closed in July. Not supported, not planned, a product decision rather than an oversight.</p>
 
-<blockquote><p>Omarchy isn't going to support ZFS. That's a product call.</p></blockquote>
+<p>That was the right answer, and right for the same reasons I had already talked myself into. It also left me something more useful to do than argue about it. Write the thing down.</p>
 
-<p>He was right, and right for the reasons I'd already talked myself into. He also said he'd be glad to see it written up somewhere others can find it.</p>
+<p>So alongside the package there are docs now, covering the three situations people actually land in. A fresh machine you want on an encrypted ZFS root. An existing Omarchy install you want to move onto ZFS, where the short answer is that no in-place btrfs to ZFS conversion exists and anything claiming otherwise is about to lose your data. And the one most people actually want, which is keeping Omarchy's btrfs root exactly as it is and putting ZFS under <code>/home</code> or a data pool.</p>
 
-<p>That's a better ask than a merge, and one I can actually do without spending anybody else's maintenance budget. So alongside the package there are docs now, covering the three situations people actually land in. A fresh machine you want on an encrypted ZFS root. An existing Omarchy install you want to move onto ZFS, where the short answer is that no in-place btrfs to ZFS conversion exists and anything claiming otherwise is about to lose your data. And the one most people actually want, which is keeping Omarchy's btrfs root exactly as it is and putting ZFS under <code>/home</code> or a data pool.</p>
-
-<p>They include the parts that went wrong, because that's what nobody writes down. That ZFS will cheerfully mount a dataset over a non-empty <code>/home</code> and make your files invisible while new writes go somewhere else. That <code>findmnt /home</code> answers "mounted" for a plain directory, which quietly invalidated a day of my mount checks. That a missing <code>/home</code> makes the login screen behave exactly like it's rejecting a correct password.</p>
+<p>They include the parts that went wrong, because that's what nobody writes down. That ZFS will cheerfully mount a dataset over a non-empty <code>/home</code> and make your files invisible while new writes go somewhere else. That <code>findmnt /home</code> answers "mounted" for a plain directory that is not one. That a missing <code>/home</code> makes the login screen behave exactly like it's rejecting a correct password.</p>
 
 <h2>What I'm actually happy about</h2>
 
